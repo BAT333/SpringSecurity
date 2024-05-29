@@ -1,0 +1,218 @@
+PASSO A PASSO PARA CRIA SPRING SECURITY
+POR TOKEN
+
+ADD DEPENDECIA DO SPRING SECURRITY -> ESSA PRIMEIRO PASSO
+
+CRIA ENTIDADE USARIO->
+LOGIN E SENHA, ETC
+
+CRIA O REPOSITORY E SERVICE
+
+CRIA UMA CLASSE DE AUTENTICAÇÃO, USANDO implements UserDetailsService
+
+ELA VAI AUTENTICAR SE ESSE USARIO EXISTE NO BANCO VAI PESQUISAR
+
+
+AQUI PARTE PARA ENSINAR SPRING QUE NOS NÃO QUEREMOS USAR FORMATO PADRAO DO SPRING
+MAS SIM UM NOSSO OU NOSSO TIPO,
+PARA ISSO CRIA UMA CLASS DE CONFIGURAÇÃO NO SPRING COM DUAS ANOTAÇÃO
+@Configuration -> DIZENDO QUE CLASS DE CONFIGURAÇÃO PARA SPRING
+@EnableWebSecurity ->  AQUI DIZ QUE VAMOS PERSONALIZAR A SEGURAÇA DO SPRING
+
+ @Bean -> PARA DEIXAR ESSA CLASS VISIVEL PARA TODAS CLASS DO SPRING
+    public SecurityFilterChain filterChain (HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity.csrf(csrf->csrf.disable())
+                .sessionManagement(httpSecurityConfigurer -> httpSecurityConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .build();
+    }
+    SecurityFilterChain -> ESSE RETORNO DE METODO PARA RETORNO DE AUTENTICAÇÃO E CONFIGURAÇÃO DO FILTROS DO SPRING
+    HttpSecurity ->  configurar segurança baseada na web para solicitações http específicas, PARA NÃO INSTANCIA  SecurityFilterChain
+ httpSecurity.csrf(csrf->csrf.disable()) -> PARA DESABILITAR SEGURAÇA CONTRA CSRF
+sessionManagement-> ESTA MUDANDO MODO AUTENTICAÇÃO
+
+DEPOIS CRIANDO CLASS CONTROLE DE AUTENTICAÇÃO
+com
+    @Autowired
+    private AuthenticationManager manager;
+    @PostMapping
+    @Transactional
+    public ResponseEntity<String> logins(@RequestBody @Valid DataLogin dataLogin){
+        System.out.println(dataLogin);
+        var token =new UsernamePasswordAuthenticationToken(dataLogin.login(),dataLogin.senha());
+        manager.authenticate(token);
+        return ResponseEntity.ok("TOKEN");
+    }
+
+
+    private AuthenticationManager manager;-> no spring security por seguraça nos não chama classe
+    de autenticação diretamente
+    para isso nos usar essa class por baixo dos panos ela vai chamar a class de autenticação
+
+    UsernamePasswordAuthenticationToken -> essa class representa username e senha, por que esse tipo dto do sepring para
+    para ter mais segurança e acabar não invadindo
+    . Uma implementação de autenticação projetada para apresentação simples de nome de usuário e senha .
+
+
+    manager.authenticate(token)-> aqui faz autenticação da class pega user, senha se precisar etc por
+
+
+O SPRING POR SI SO NÃO SABE INJETA AuthenticationManager,ENTÃO NA CLASS DE SECURITYCONFIGURTION
+ENSINA, COM RETORNO DO METODO QUE NOS QUER QUE AuthenticationManager, E USA COMO PARAMETRO
+AuthenticationConfiguration-> PARA CONFIGURA, USA getAuthenticationManager-> QUE CLASS QUE INJETA
+@Bean
+    public AuthenticationManager manager (AuthenticationConfiguration configuration) throws Exception {
+        return  configuration.getAuthenticationManager();
+    }
+
+tem ensinar para spring como vc esta salvando senhas no seu banco no meu caso é BCrypt
+tem fala isso na conficuração do spring
+ @Bean
+    public PasswordEncoder encoder(){
+        return new BCryptPasswordEncoder();
+    }
+    deste jeito
+    PasswordEncoder -> aqui class represta hast de senha
+
+    BCryptPasswordEncoder -> aqui tipo de criptografia que bc
+
+OUTRO PASSO
+nos na class usario precisa implementar outra coisa
+
+public class User implements UserDetails
+ UserDetails é usado pelo AuthenticationManager do Spring Security para autenticar o usuário durante o processo de login
+
+O UserDetails é uma interface do Spring Security que define os requisitos básicos de um usuário autenticado em uma aplicação. Ela é utilizada para fornecer informações sobre o usuário, como seu nome de usuário, senha, permissões e status da conta.
+
+Algumas das principais funcionalidades do UserDetails são:
+
+Autenticação: O UserDetails é usado pelo AuthenticationManager do Spring Security para autenticar o usuário durante o processo de login.
+
+Autorização: As informações fornecidas pelo UserDetails, como as permissões do usuário, são utilizadas pelo sistema de autorização do Spring Security para determinar quais recursos o usuário pode acessar.
+
+Gerenciamento de conta: Métodos como isAccountNonExpired(), isAccountNonLocked() e isCredentialsNonExpired() permitem que o Spring Security gerencie o status da conta do usuário.
+
+Extensibilidade: Ao implementar a interface UserDetails, você pode personalizar as informações do usuário de acordo com as necessidades da sua aplicação.
+
+No exemplo fornecido, a classe Usuario implementa a interface UserDetails, permitindo que o Spring Security utilize essas informações durante o processo de autenticação e autorização. Isso é fundamental para garantir a segurança da sua API REST.
+
+
+NA AULA NOS USA ISSO PARA DIZER NO CAMPO DE AUTENTICAÇÃO QUAL É SENHA ONDE FICA  E ONDE LOGIN USARIO
+MEIO QUE PARA PESQUISA NA AUTETICAÇÃO
+
+
+
+
+AGORA PARA GERA O TOKEN
+PRIMEIRO ADD DEPENDECIA DE GERA TOKEN E QUAL VC QUER
+https://jwt.io/ -> ACHA NESSE SITE
+
+public String geraToken(User user){
+        try {
+            var algoritmo = Algorithm.HMAC256("12345678");
+            return JWT.create()
+                    .withIssuer("RAFAEL")
+                    .withSubject(user.getLogin())
+                    .withExpiresAt(dataExpiracao())
+                    .sign(algoritmo);
+        } catch (JWTCreationException exception){
+            throw new RuntimeException("erro ao gerrar token jwt", exception);
+        }
+    }
+
+    private Instant dataExpiracao() {
+        return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
+    }
+
+    VALIDAÇÃO DE TOKEN, CRIA FILTER
+    CRIA UMA CLASS DE FILTRANDO TOKEN
+
+    @Component
+    public class SercurityFilter extends OncePerRequestFilter {
+
+
+    com metodos dentro dela
+
+    HttpServletRequest request,-> pega coisa da requisição
+    HttpServletResponse response, -> manda coisa para requisição
+    FilterChain filterChain-> repeesenta cadeia de filtro
+
+    com esse vc doFilterInternal ussa essa class para continal com filterChain
+    e recuperaToken request String tokenJTW =request.getHeader("Authorization");
+
+    aqui faz validação no tokenservice
+
+     public String getSubject(String tokenJWT) {
+            try {
+                var algoritmo = Algorithm.HMAC256(secret);
+                return JWT.require(algoritmo)
+                        .withIssuer("RAFAEL")
+                        .build()
+                        .verify(tokenJWT)
+                        .getSubject();
+            } catch (JWTVerificationException exception) {
+                throw new RuntimeException("Token JWT inválido ou expirado!");
+            }
+        }
+
+     codigo de validação do token
+
+
+     AGORA PARA DIZER QUE TOKEN PRECISA DE TODAS OUTRAS CLASS, MENOS PARA LOGIN
+@Bean
+    public SecurityFilterChain filterChain (HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity.csrf(csrf->csrf.disable())
+                .sessionManagement(httpSecurityConfigurer -> httpSecurityConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(arm -> {
+                    arm.requestMatchers("/login").permitAll();
+                    arm.anyRequest().authenticated();
+                })
+                .build();
+    }
+     .authorizeHttpRequests(arm -> {
+                        arm.requestMatchers("/login").permitAll();-> a class login tem permição total
+                        arm.anyRequest().authenticated();-> outras precisa de autenticação
+                    })
+
+PARA FAZER ESSA AUTENTICAÇÃO,
+NA CLASS SERCURITYFILTER
+NO METODO doFilterInternal
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        if(this.recuperandoToken(request) != null){
+            String tokenJWT =  this.recuperandoToken(request);
+            var user =   this.service.getSubject(tokenJWT);
+            var usuario = repository.findByLogin(user);
+            var authentication = new UsernamePasswordAuthenticationToken(usuario,null,usuario.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+        filterChain.doFilter(request,response);
+    }
+var user =   this.service.getSubject(tokenJWT);-> AQUI RETORNA SO LOGUI DO USUARIO RAFAEL@GMAILETC
+var usuario = repository.findByLogin(user);-> AQUI PESQUISA
+var authentication = new UsernamePasswordAuthenticationToken(usuario,null,usuario.getAuthorities());
+SecurityContextHolder.getContext().setAuthentication(authentication);
+
+var authentication = new UsernamePasswordAuthenticationToken(usuario,null,usuario.getAuthorities());
+AQUI PASSA USARIO AS CREDENCIAS SE ELE TIVE, SE NÃO PASSA NULL, E AS AUTORIZAÇÃO DELE
+SecurityContextHolder.getContext().setAuthentication(authentication);
+setAuthentication(authentication);-> AQUI SETA QUE USARIO FOI LOGADO/ AUTENTICADO DEPPOS VEM PARA CA E AUTENTICA E LOGA USAURIO
+
+
+AGORA PARA ARRUMA ORDEM DE EXCULÇÃO DE FILTER
+NÃO TA DANDO CERTO POR QUE PRIMEIRO TA CHAMANDO FILTRO
+DE NÃO ESTA LOGADO PRIMEIRO, INVES DO FILTRO AUTENTICAR
+CLASS SERCURITYCONFIGURTION
+
+@Bean
+    public SecurityFilterChain filterChain (HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity.csrf(csrf->csrf.disable())
+                .sessionManagement(httpSecurityConfigurer -> httpSecurityConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(arm -> {
+                    arm.requestMatchers("/login").permitAll();
+                    arm.anyRequest().authenticated();
+                }).addFilterBefore(sercurityFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+    .addFilterBefore(sercurityFilter, UsernamePasswordAuthenticationFilter.class)
+    chama primeiro nosso filtro, depois qual filtro tem chamar, que filter da spring

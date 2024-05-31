@@ -1,5 +1,6 @@
-package com.example.userSeguranca.test;
+package com.example.userSeguranca.Service;
 
+import com.example.userSeguranca.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

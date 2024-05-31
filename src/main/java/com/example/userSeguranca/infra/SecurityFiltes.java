@@ -1,5 +1,7 @@
-package com.example.userSeguranca.test;
+package com.example.userSeguranca.infra;
 
+import com.example.userSeguranca.Repository.UserRepository;
+import com.example.userSeguranca.infra.token.ServiceToken;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

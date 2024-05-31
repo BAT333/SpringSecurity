@@ -1,5 +1,6 @@
-package com.example.userSeguranca.test;
+package com.example.userSeguranca.Repository;
 
+import com.example.userSeguranca.Domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Repository;

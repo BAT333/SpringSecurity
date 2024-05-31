@@ -1,4 +1,4 @@
-package com.example.userSeguranca.test;
+package com.example.userSeguranca.Domain;
 
 public enum RolesUser {
     ADMIN("admin"),

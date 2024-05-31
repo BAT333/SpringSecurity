@@ -1,12 +1,17 @@
-package com.example.userSeguranca.test;
+package com.example.userSeguranca.Controller;
 
+import com.example.userSeguranca.Domain.User;
+import com.example.userSeguranca.Repository.UserRepository;
+import com.example.userSeguranca.infra.token.ServiceToken;
+import com.example.userSeguranca.model.DataLoginsDTO;
+import com.example.userSeguranca.model.DataRegisterUser;
+import com.example.userSeguranca.model.DataTokenDTO;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;

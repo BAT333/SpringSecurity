@@ -19,24 +19,27 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
     @Autowired
-    private SecurityFiltes filtes;
+    private SecurityFilter filter;
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity.csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(http-> http.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authority->authority.requestMatchers(HttpMethod.POST,"/login").permitAll().
-                        requestMatchers(HttpMethod.POST,"/login/register").hasRole("SUPER")
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(filtes, UsernamePasswordAuthenticationFilter.class)
+    public SecurityFilterChain filterChain(HttpSecurity security) throws Exception {
+       return security.csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(http->http.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorization->authorization
+                        .requestMatchers(HttpMethod.POST,"/login").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/login/auth").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT,"/login/update").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST,"/login/register").hasRole("ADMIN")
+                        .anyRequest().authenticated())
+               .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager manager (AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
     @Bean
     public PasswordEncoder encoder(){
         return new BCryptPasswordEncoder();
     }
+
 }

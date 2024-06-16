@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 @Service
-public class ServiceToken {
+public class TokenService {
     @Value("$api.token.secret")
     private String secret;
 
@@ -46,5 +46,3 @@ public class ServiceToken {
         return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
     }
 }
-
-

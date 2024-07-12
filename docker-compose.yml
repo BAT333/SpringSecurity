@@ -1,0 +1,20 @@
+version: '3'
+services:
+  db:
+    image: mysql
+    volumes:
+      - ./data_dockers:/var/lib/mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: security1234
+      MYSQL_DATABASE: security_db
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+volumes:
+  data_dockers:
+

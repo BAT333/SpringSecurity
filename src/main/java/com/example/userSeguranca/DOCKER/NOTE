@@ -1,0 +1,52 @@
+COMO INSTALAR E CRIAR UMA IMAGEM POR LINHA DE COMANDO,
+EXPECIFICAMENTE MYSQL
+
+POR LINHA DE COMANDO
+
+docker run -p 3306:3306 --name myTest -e MYSQL_ROOT_PASSWORD = root -d mysql
+
+docker run COMANDO DO DOCKER PARA INICIAR
+-p 3306:3306  PARA ESCOLHER A PORA QUE VAI INICIAR ESSE CONTEINER
+--name myTest -e MYSQL_ROOT_PASSWORD = root -d O NOME E SENHA QUE SEU CONREINER DO BANCO DE DADOS VAI TER
+ mysql A IMAGEM QUE VC QUE INSTALAR, QUE DO MYSQL
+ mysql:5.5 INSTALAR IMAGEM COM VERSÃO ESPECIFICA
+
+
+ CRIANDO UMA CONTEINER PESONALIZADO
+ PRIMEIRO VAMO CRIAR UMA ARQUIVO CHAMADO
+ Dockerfile
+
+FROM eclipse-temurin:21-jdk-alpine as builder
+from imagem base que vamos pegar para rodar na nossas aplicação
+WORKDIR application
+diretorio de trabalho onde vai criar seu projeto
+
+
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+COPY src src
+
+para copiar aquivo da sua maquina para o diretorio raiz para diertorio que vc escolher que normalmente
+diretorio application oq vc escolheu no woekdir
+so colocar ponto que vai para la
+
+
+RUN ./mvnw package -DskipTests
+para rodar um comando assim que inciada sua aplicação
+
+EXPOSE 3000
+OU
+PORT SE PREFCISAR
+PORTA QUE VAI RODAR APLICAÇÃO
+
+CMD
+OU
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+CMD ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+
+O  COMANDO NO PROMPT COMANDO QUE VAI SER INCIADO PARA RODAR  SUA APLICAÇÃO
+
+para usar intalar so fazer
+docker buide  -t para dar nome para aplicação
+docker run -p 3306:3306 --name myTest -d nomedaimagemquevcquerultilizar
